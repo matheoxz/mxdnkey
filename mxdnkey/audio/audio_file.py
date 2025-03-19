@@ -25,7 +25,7 @@ class AudioFile:
         try:
             logger.debug("Loading metadata for file: %s", self.filepath)
             tag = mutagen.File(self.filepath)
-            logger.debug("Metadata loaded successfully: %s", tag)
+            logger.debug("Metadata loaded successfully! ")
             return tag
         except Exception as err:
             logger.exception("Error loading metadata: %s", err)
