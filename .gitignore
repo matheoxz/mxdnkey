@@ -1,6 +1,7 @@
-# Start Generation Here
 # Byte-compiled files
 __pycache__/
+*/__pycache__/
+*.pyc
 *.py[cod]
 
 # Distribution / packaging
