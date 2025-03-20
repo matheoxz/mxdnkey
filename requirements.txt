@@ -6,3 +6,7 @@ mutagen>=1.45.1
 matplotlib>=3.2.2
 pytest>=6.0.0
 tqdm>=4.64.0
+pydub>=0.25.1
+simpleaudio>=1.0.3 
+sounddevice>=0.4.1
+pyaudio>=0.2.11

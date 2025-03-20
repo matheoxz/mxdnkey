@@ -17,7 +17,7 @@ class BPMDetector:
             # Use librosa’s built-in beat tracking
             tempo, _ = librosa.beat.beat_track(y=audio_data, sr=sample_rate)
             logger.debug("Detected BPM: %s", tempo)
-            return tempo
+            return tempo[0]
             
         except Exception as e:
             logger.exception("Error detecting BPM: %s", e)
