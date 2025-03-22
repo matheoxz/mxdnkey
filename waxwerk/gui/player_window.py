@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from logging import getLogger
 
-from mxdnkey.utils.audio_processor import AudioProcessor
-from mxdnkey.utils.simple_time_stretcher import SimpleTimeStretcher
-from mxdnkey.audio.audio_file import AudioFile
+from waxwerk.player.audio_processor import AudioProcessor
+from waxwerk.player.time_stretcher import SimpleTimeStretcher
+from waxwerk.dataclass.audio_file import AudioFile
 
 logger = getLogger(__name__)
 

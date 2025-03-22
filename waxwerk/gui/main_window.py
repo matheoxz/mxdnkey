@@ -1,38 +1,99 @@
-"""
-MainWindow Module
-===================
-
-Provides a Tkinter window for selecting a folder and processing audio files.
-For each audio file, an AudioFile object is instantiated;
-its analysis (BPM and Key) is triggered (with progress callback updating its row's progress bar).
-A table is displayed with metadata (genre, artist, album, title) and analysis (BPM, Key, Camelot),
-and a Play button per row opens a PlayerWindow for playback.
-Files are processed in parallel.
-"""
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 import threading
-import os
-from mxdnkey.gui.player_window import PlayerWindow
-from mxdnkey.utils.logger import get_logger
+from waxwerk.utils.folder_utils import FolderHandler
+from waxwerk.gui.player_window import PlayerWindow
+from waxwerk.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("mxdnkey")
-        self.geometry("900x600")
-        self.create_widgets()
+        self.title("DJ organizer")
+        self.geometry("250x500")
+        self.create_initial_widgets()
 
-    def create_widgets(self):
-        """Creates main GUI widgets: a folder selection button and a frame for the table."""
-        self.open_folder_btn = tk.Button(self, text="Open Music Folder", command=self.select_folder)
-        self.open_folder_btn.pack(pady=10)
-        self.table_frame = tk.Frame(self)
-        self.table_frame.pack(fill="both", expand=True, padx=10, pady=10)
-        headers = ["Index", "Genre", "Artist", "Album", "Title", "Progress", "BPM", "Key", "Camelot", "Play"]
+    def create_initial_widgets(self):
+        """Creates initial centered button layout"""
+        self.button_frame = tk.Frame(self)
+        self.button_frame.place(relx=0.5, rely=0.5, anchor='center', relwidth=0.67, relheight=0.67)
+        
+        self.open_folder_btn = tk.Button(
+            self.button_frame, 
+            text="Open Music Folder", 
+            command=self.select_folder
+        )
+        self.rename_files_btn = tk.Button(
+            self.button_frame, 
+            text="Rename Files", 
+            command=self.rename_files
+        )
+        
+        self.open_folder_btn.grid(row=0, column=0, sticky='nsew', padx=0, pady=0)
+        self.rename_files_btn.grid(row=1, column=0, sticky='nsew', padx=0, pady=0)
+        
+        self.button_frame.grid_rowconfigure(0, weight=1)
+        self.button_frame.grid_rowconfigure(1, weight=1)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+    def rename_files(self):
+        """Renames files in the selected folder based on metadata"""
+        folder_path = filedialog.askdirectory(title="Select Music Folder")
+        if folder_path:
+            files = FolderHandler.get_audio_files(folder_path)
+            logger.debug("Found %d audio files in folder: %s", len(files), folder_path)
+    
+    def create_fullscreen_widgets(self):
+        """Recreates button layout for fullscreen mode"""
+        self.button_frame.place_forget()
+        self.button_frame.pack(side='top', anchor='nw', pady=10)
+        
+        self.open_folder_btn.grid_forget()
+        self.rename_files_btn.grid_forget()
+        
+        self.open_folder_btn.grid(row=0, column=0, sticky='nsew', padx=0, pady=0)
+        self.rename_files_btn.grid(row=0, column=1, sticky='nsew', padx=0, pady=0)
+        
+        self.button_frame.grid_columnconfigure(0, weight=1, uniform='buttons')
+        self.button_frame.grid_columnconfigure(1, weight=1, uniform='buttons')
+        self.button_frame.grid_rowconfigure(0, weight=1)
+
+    def select_folder(self):
+        """Handles folder selection and layout transition"""
+        folder_path = filedialog.askdirectory(title="Select Music Folder")
+        if folder_path:
+            self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
+            self.create_fullscreen_widgets()
+            
+            self.create_table()
+            files = FolderHandler.get_audio_files(folder_path)
+            logger.debug("Found %d audio files in folder: %s", len(files), folder_path)
+            
+            max_threads = min(4, len(files))
+            semaphore = threading.Semaphore(max_threads)
+            
+            def thread_target(file_path, idx):
+                with semaphore:
+                    self.analyze_file_gui(file_path, idx)
+            
+            for idx, file_path in enumerate(files, start=1):
+                self.add_table_row(idx, file_path)
+                threading.Thread(target=thread_target, args=(file_path, idx), daemon=True).start()
+
+    # The following methods remain unchanged except where noted:
+    def create_table(self):
+        """Creates the table for displaying audio file metadata."""
+        self.canvas = tk.Canvas(self)
+        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.table_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.table_frame, anchor="nw")
+
+        headers = ["Index", "Genre", "Artist", "Album", "Title", "Progress", "BPM", "Key", "Camelot", "Player"]
         for col, header in enumerate(headers):
             lbl = tk.Label(self.table_frame, text=header, font=("Arial", 10, "bold"),
                            borderwidth=1, relief="solid")
@@ -41,21 +102,12 @@ class MainWindow(tk.Tk):
             self.table_frame.grid_columnconfigure(col, weight=1)
         self.row_widgets = {}
 
-    def select_folder(self):
-        """Opens a folder dialog, lists audio files, and begins parallel analysis."""
-        folder_path = filedialog.askdirectory(title="Select Music Folder")
-        if folder_path:
-            self._clear_table()
-            allowed_extensions = {'.mp3', '.wav', '.flac', '.ogg', '.m4a', '.wma'}
-            files = [os.path.join(folder_path, f) for f in os.listdir(folder_path)
-                     if os.path.splitext(f)[1].lower() in allowed_extensions]
-            logger.debug("Found %d audio files in folder: %s", len(files), folder_path)
-            for idx, file_path in enumerate(files, start=1):
-                self.add_table_row(idx, file_path)
-                threading.Thread(target=self.analyze_file_gui, args=(file_path, idx), daemon=True).start()
+        self.table_frame.bind("<Configure>", self.on_frame_configure)
+
+    def on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def _clear_table(self):
-        """Removes previous table rows (except for the header row)."""
         for widget in self.table_frame.winfo_children():
             info = widget.grid_info()
             if "row" in info and int(info["row"]) > 0:
@@ -63,13 +115,8 @@ class MainWindow(tk.Tk):
         self.row_widgets = {}
 
     def add_table_row(self, idx, file_path):
-        """
-        Creates a new row in the table.
-        An AudioFile object is created to extract metadata.
-        A Play button is provided to open a PlayerWindow.
-        """
         try:
-            from mxdnkey.audio.audio_file import AudioFile
+            from waxwerk.dataclass.audio_file import AudioFile
             audio_file = AudioFile(file_path)
         except Exception as e:
             logger.error("Error creating AudioFile for '%s': %s", file_path, e)
@@ -140,16 +187,11 @@ class MainWindow(tk.Tk):
         return genre, artist, album, title
 
     def analyze_file_gui(self, file_path, row_index):
-        """
-        For the given file, triggers its analysis (which updates BPM and Key).
-        Uses a progress callback to update the progress bar for this row.
-        """
         try:
-            from mxdnkey.audio.audio_file import AudioFile
+            from waxwerk.dataclass.audio_file import AudioFile
             audio_file = AudioFile(file_path)
             def progress_callback(percentage):
                 self.update_row_progress(row_index, percentage)
-            # Trigger analysis (BPM and Key)
             audio_file.analyze(progress_callback)
             bpm = audio_file.BPM
             key_info = audio_file.Key if audio_file.Key is not None else {"key": "Unknown", "camelot": "Unknown"}
@@ -169,7 +211,7 @@ class MainWindow(tk.Tk):
 
     def open_player(self, audio_file):
         """Opens a new PlayerWindow for the specified AudioFile instance."""
-        from mxdnkey.gui.player_window import PlayerWindow
+        from waxwerk.gui.player_window import PlayerWindow
         PlayerWindow(self, audio_file)
 
 if __name__ == '__main__':

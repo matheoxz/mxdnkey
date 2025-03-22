@@ -1,5 +1,5 @@
 import logging
-import mxdnkey.config as config
+import waxwerk.config as config
 
 def get_logger(name):
     """

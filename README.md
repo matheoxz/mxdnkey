@@ -1,4 +1,4 @@
-# mxdnkey - DJ music library organizer
+# waxWerk - DJ music library organizer
 
 ## Overview
 mxdnkey is a Python-based application designed to organize and analyze music files in a user's library. It provides a command-line interface for managing audio files, analyzing metadata, and performing various audio analyses.

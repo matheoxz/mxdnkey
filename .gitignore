@@ -1,6 +1,9 @@
 # Byte-compiled files
 __pycache__/
-*/__pycache__/
+mxdnkey/__pycache__/
+mxdnkey/*/__pycache__/
+mxdnkey/__pycache__/
+
 *.pyc
 *.py[cod]
 

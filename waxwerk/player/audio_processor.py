@@ -5,7 +5,7 @@ Handles resampling (speed changes), time-stretching, and BPM validation.
 
 import numpy as np
 import logging
-from mxdnkey.analysis.bpm_detector import BPMDetector
+from waxwerk.analysis.bpm_detector import BPMDetector
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class AudioProcessor:
         try:
             detector = BPMDetector()
             # detector.detect_bpm is assumed to return an array-like value.
-            bpm = detector.detect_bpm(audio_file.audio_data, audio_file.sample_rate)
+            bpm = detector.detect_bpm(audio_file.audio_data, audio_fsile.sample_rate)
             logger.info("Fallback BPM detection returned: %s", bpm)
             return bpm or 120
         except Exception as e:

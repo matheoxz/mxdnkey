@@ -25,7 +25,7 @@ import os
 import mutagen
 import librosa
 import numpy as np
-from mxdnkey.utils.logger import get_logger
+from waxwerk.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -93,7 +93,7 @@ class AudioFile:
         """
         if self.audio_data is None:
             self.load_audio()
-        from mxdnkey.analysis.analyzer import AudioAnalyzer
+        from waxwerk.analysis.analyzer import AudioAnalyzer
         analyzer = AudioAnalyzer()
         logger.info("Starting analysis for file: %s", self._file_path)
         analyzer.analyze(self, progress_callback)

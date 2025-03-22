@@ -13,7 +13,7 @@ of each analysis step (progress as a percentage: 50% after BPM, 100% after Key).
 import numpy as np
 from .bpm_detector import BPMDetector
 from .key_detector import KeyDetector
-from mxdnkey.utils.logger import get_logger
+from waxwerk.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
