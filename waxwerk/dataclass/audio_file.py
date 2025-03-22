@@ -25,35 +25,40 @@ import os
 import mutagen
 import librosa
 import numpy as np
+import re
 from waxwerk.utils.logger import get_logger
+from waxwerk.dataclass.key import Key
 
 logger = get_logger(__name__)
 
 class AudioFile:
+    title: str
+    album: str
+    artist: str
+    genre: list[str]
+    file_path: str
+    rating: int = 0
+    duration: float = 0.0
+    BPM: float = 0.0
+    key: Key = None
+    traktor_analysis: bool = False
+    metadata: mutagen.File
+    audio: np.ndarray = None
+    sample_rate: int = 44100
+
     def __init__(self, file_path):
         logger.debug("Initializing AudioFile with path: %s", file_path)
         if not os.path.exists(file_path):
             logger.error("File '%s' does not exist.", file_path)
             raise FileNotFoundError(f"{file_path} does not exist.")
 
-        self._file_path = file_path
+        self.file_path = file_path
         self.metadata = self._load_metadata()
-
-        # Audio will be loaded on-demand.
-        self.audio_data = None
-        self.sample_rate = None
-
-        # Initialize analysis properties.
-        self._bpm = None
-        self._key = None
-
-        # User rating property (default 0).
-        self._rating = 0
 
     def _load_metadata(self):
         """
         Loads metadata from the file using mutagen's easy mode.
-        Returns the metadata object (or None if not found).
+        Returns the metadata object (or None if not found) and sets self.title, album, genre, and artist.
         """
         try:
             logger.debug("Loading metadata for file: %s", self._file_path)
@@ -61,6 +66,12 @@ class AudioFile:
             if tag is None:
                 logger.debug("No metadata found for file: %s", self._file_path)
             else:
+                self.title = self._get_metadata_tag("title", "TIT2")
+                self.album = self._get_metadata_tag("album", "TALB")
+                self.artist = self._get_metadata_tag("artist", "TPE1")
+                self.genre = re.split(r',\s*|\s+', self._get_metadata_tag("genre", "TCON"))
+                self.traktor_analysis = "traktor4" in tag
+                logger.debug("Metadata: %s - %s - %s - %s", self.title, self.album, self.artist, self.genre)
                 logger.debug("Metadata successfully loaded.")
             return tag
         except Exception as err:
@@ -74,6 +85,7 @@ class AudioFile:
         try:
             logger.info("Loading audio data from file: %s", self._file_path)
             self.audio_data, self.sample_rate = librosa.load(self._file_path, sr=None)
+            self.duration = librosa.get_duration(y=self.audio_data, sr=self.sample_rate)
             logger.debug("Audio loaded with sample rate: %s", self.sample_rate)
         except Exception as e:
             logger.exception("Error loading audio: %s", e)
@@ -96,7 +108,9 @@ class AudioFile:
         from waxwerk.analysis.analyzer import AudioAnalyzer
         analyzer = AudioAnalyzer()
         logger.info("Starting analysis for file: %s", self._file_path)
-        analyzer.analyze(self, progress_callback)
+        result = analyzer.analyze(self, progress_callback)
+        self.key = result.Key
+        self.BPM = result.BPM
         logger.info("Analysis complete for file: %s", self._file_path)
 
     def get_audio_form(self, size):
@@ -138,64 +152,3 @@ class AudioFile:
                 logger.debug("Error retrieving metadata tag %s: %s", tag, e)
         logger.info("No metadata found among tags: %s", tag_names)
         return "Unknown"
-
-    # ------------------ Property Getters and Setters ---------------------
-    @property
-    def file_path(self):
-        """Returns the file path of the audio file."""
-        logger.debug("Accessing file_path property.")
-        return self._file_path
-
-    @property
-    def title(self):
-        """Title extracted from metadata."""
-        return self._get_metadata_tag("title", "TIT2")
-
-    @property
-    def artist(self):
-        """Artist extracted from metadata."""
-        return self._get_metadata_tag("artist", "TPE1")
-
-    @property
-    def album(self):
-        """Album extracted from metadata."""
-        return self._get_metadata_tag("album", "TALB")
-    
-    @property
-    def genre(self):
-        """Genre extracted from metadata."""
-        return self._get_metadata_tag("genre", "TCON")
-
-    @property
-    def BPM(self):
-        """The calculated BPM (float)."""
-        return self._bpm
-
-    @BPM.setter
-    def BPM(self, value):
-        logger.info("Setting BPM to %s", value)
-        self._bpm = float(value)
-
-    @property
-    def Key(self):
-        """The detected key as a dictionary e.g. {'key': 'C major', 'camelot': '8B'}."""
-        return self._key
-
-    @Key.setter
-    def Key(self, value):
-        logger.info("Setting Key to %s", value)
-        self._key = value
-
-    @property
-    def Rating(self):
-        """User rating (int, between 0 and 5)."""
-        logger.debug("Accessing Rating property: %s", self._rating)
-        return self._rating
-
-    @Rating.setter
-    def Rating(self, value):
-        if not isinstance(value, (int, float)) or not (0 <= value <= 5):
-            logger.error("Invalid Rating: %s. Must be between 0 and 5.", value)
-            raise ValueError("Rating must be between 0 and 5.")
-        logger.info("Setting Rating to %s", value)
-        self._rating = int(value)

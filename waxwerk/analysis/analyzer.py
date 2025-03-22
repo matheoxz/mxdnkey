@@ -13,9 +13,17 @@ of each analysis step (progress as a percentage: 50% after BPM, 100% after Key).
 import numpy as np
 from .bpm_detector import BPMDetector
 from .key_detector import KeyDetector
+from dataclasses import dataclass
 from waxwerk.utils.logger import get_logger
+from waxwerk.dataclass.audio_file import AudioFile
+from waxwerk.dataclass.key import Key
 
 logger = get_logger(__name__)
+
+@dataclass
+class AudioAnalysisResult:
+    BPM: float
+    Key: Key
 
 class AudioAnalyzer:
     def __init__(self):
@@ -25,7 +33,7 @@ class AudioAnalyzer:
         self.bpm_detector = BPMDetector()
         self.key_detector = KeyDetector()
 
-    def analyze(self, audio_file, progress_callback=None):
+    def analyze(self, audio_file: AudioFile, progress_callback=None) -> AudioAnalysisResult:
         """
         Analyzes audio_file for BPM and Key.
         
@@ -33,7 +41,7 @@ class AudioAnalyzer:
           audio_file: an instance of AudioFile.
           progress_callback: Optional function that accepts a numeric percentage (0-100).
         
-        This method calls the appropriate detectors and updates the audio_file's BPM and Key properties.
+        This method calls the appropriate detectors and returns an AudioAnalysisResult instance.
         """
         logger.info("Starting analysis on file: %s", audio_file.file_path)
         if audio_file.audio_data is None:
@@ -46,13 +54,8 @@ class AudioAnalyzer:
         for i, (task, func) in enumerate(tasks):
             result = func(audio_file.audio_data, audio_file.sample_rate)
             results[task] = result
-            if task == "BPM":
-                # Expect detector returns array; take first element.
-                audio_file.BPM = result
-            elif task == "Key":
-                audio_file.Key = result
             if progress_callback:
                 # Update progress: evenly distribute progress among tasks.
                 progress_callback((i + 1) * 100 / total_tasks)
         logger.info("Completed analysis on file: %s", audio_file.file_path)
-        return results
+        return AudioAnalysisResult(BPM=results["BPM"], Key=results["Key"])

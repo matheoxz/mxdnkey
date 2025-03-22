@@ -1,5 +1,9 @@
 import numpy as np
 import librosa
+from waxwerk.utils.logger import get_logger
+from waxwerk.enums import Tonic, Mode
+from waxwerk.dataclass.audio_file import AudioFile
+from waxwerk.dataclass.key import Key
 
 class KeyDetector:
     def __init__(self):
@@ -13,23 +17,7 @@ class KeyDetector:
         self.minor_profile = self.minor_profile / np.sum(self.minor_profile)
         
         # List of keys corresponding to each pitch class index.
-        self.keys = ["C", "C#", "D", "D#", "E", "F",
-                     "F#", "G", "G#", "A", "A#", "B"]
-        
-        # Mapping musical keys to Camelot Wheel notation
-        # For major keys (commonly designated as "B")
-        self.camelot_major = {
-            "C": "8B",  "C#": "3B", "D": "10B", "D#": "5B",
-            "E": "12B", "F": "7B",  "F#": "2B", "G": "9B",
-            "G#": "4B", "A": "11B", "A#": "6B", "B": "1B"
-        }
-        
-        # For minor keys (commonly designated as "A")
-        self.camelot_minor = {
-            "C": "5A",  "C#": "12A", "D": "7A", "D#": "2A",
-            "E": "9A",  "F": "4A",  "F#": "11A", "G": "6A",
-            "G#": "1A", "A": "8A",   "A#": "3A", "B": "10A"
-        }
+        self.keys = list(Tonic)
     
     def detect_key(self, audio_data, sample_rate):
         # Compute a chromagram from the audio signal.
@@ -44,8 +32,8 @@ class KeyDetector:
             chroma_norm = chroma_mean
         
         best_corr = -np.inf
-        best_key = None
-        best_mode = None  # 'major' or 'minor'
+        best_key: Tonic = None
+        best_mode: Mode = None  
         # Loop through all 12 keys
         for i in range(12):
             # Rotate (shift) the key templates according to the candidate key.
@@ -59,17 +47,11 @@ class KeyDetector:
             if corr_major > best_corr:
                 best_corr = corr_major
                 best_key = self.keys[i]
-                best_mode = "major"
+                best_mode = Mode.MAJOR
             if corr_minor > best_corr:
                 best_corr = corr_minor
                 best_key = self.keys[i]
-                best_mode = "minor"
+                best_mode = Mode.MINOR
         
-        # Map to Camelot Wheel notation.
-        if best_mode == "major":
-            camelot = self.camelot_major.get(best_key, "N/A")
-        else:
-            camelot = self.camelot_minor.get(best_key, "N/A")
-        
-        # Return a dictionary containing the detected key and its Camelot mapping.
-        return {"key": f"{best_key} {best_mode}", "camelot": camelot}
+        # Return a dictionary containing the detected key
+        return Key(tonic=best_key, mode=best_mode) if best_key else None
