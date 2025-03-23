@@ -34,7 +34,7 @@ class AudioFile:
             logger.error("File '%s' does not exist.", file_path)
             raise FileNotFoundError(f"{file_path} does not exist.")
 
-        self.file_path = file_path
+        self.file_path = file_path.replace("\\", "/")
         self._load_metadata()
 
     def _load_metadata(self):
