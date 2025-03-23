@@ -1,4 +1,5 @@
 import os
+import random
 
 class FolderHandler:
     @staticmethod
@@ -16,3 +17,13 @@ class FolderHandler:
         for root, _, filenames in os.walk(folder_path):
             for f in filenames:
                 os.rename(os.path.join(root, f), os.path.join(root, new_name))
+    
+    @staticmethod
+    def get_random_file(folder_path, file_extension):
+        files = []
+        for root, _, filenames in os.walk(folder_path):
+            for f in filenames:
+                if os.path.splitext(f)[1].lower() == file_extension.lower():
+                    print("Found file: %s", f)
+                    files.append(os.path.join(root, f))
+        return random.choice(files) if files else None

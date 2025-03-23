@@ -7,10 +7,10 @@ Supports both CLI and GUI operation modes.
 import argparse
 import sys
 
-from waxwerk.dataclass.audio_file import AudioFile
-from waxwerk.analysis.analyzer import AudioAnalyzer
-import waxwerk.config as config
-from waxwerk.utils.logger import get_logger
+from djsbf.dataclass.audio_file import AudioFile
+from djsbf.analysis.analyzer import AudioAnalyzer
+import djsbf.config as config
+from djsbf.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -45,7 +45,7 @@ def run_gui():
     logger.info("Launching GUI mode...")
     try:
         # Import here to avoid dependency issues if someone runs CLI only
-        from waxwerk.gui.main_window import MainWindow
+        from djsbf.gui.main_window import MainWindow
         import tkinter as tk
 
         app = MainWindow()

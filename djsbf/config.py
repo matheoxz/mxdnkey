@@ -15,4 +15,8 @@ KEY_DETECTION_THRESHOLD = 0.0  # Placeholder if you want to implement threshold-
 # Logging configuration
 LOG_LEVEL = "DEBUG"    # Options: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
 
-# More configuration settings can be added here in the future.
+#Max Analysis Threads
+MAX_ANALYSIS_THREADS = 8
+
+#Gif Folder
+GIF_FOLDER = 'djsbf/media'

@@ -1,9 +1,9 @@
 import numpy as np
 import librosa
-from waxwerk.utils.logger import get_logger
-from waxwerk.enums import Tonic, Mode
-from waxwerk.dataclass.audio_file import AudioFile
-from waxwerk.dataclass.key import Key
+from djsbf.utils.logger import get_logger
+from djsbf.enums import Tonic, Mode
+from djsbf.dataclass.audio_file import AudioFile
+from djsbf.dataclass.key import Key
 
 class KeyDetector:
     def __init__(self):

@@ -1,6 +1,6 @@
-from waxwerk.dataclass.audio_file import AudioFile
+from djsbf.dataclass.audio_file import AudioFile
 import os
-from waxwerk.utils.logger import get_logger
+from djsbf.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

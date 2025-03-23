@@ -14,9 +14,9 @@ import numpy as np
 from .bpm_detector import BPMDetector
 from .key_detector import KeyDetector
 from dataclasses import dataclass
-from waxwerk.utils.logger import get_logger
-from waxwerk.dataclass.audio_file import AudioFile
-from waxwerk.dataclass.key import Key
+from djsbf.utils.logger import get_logger
+from djsbf.dataclass.audio_file import AudioFile
+from djsbf.dataclass.key import Key
 
 logger = get_logger(__name__)
 

@@ -1,5 +1,5 @@
 import librosa
-from waxwerk.utils.logger import get_logger
+from djsbf.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

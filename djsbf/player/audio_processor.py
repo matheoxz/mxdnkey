@@ -5,7 +5,7 @@ Handles resampling (speed changes), time-stretching, and BPM validation.
 
 import numpy as np
 import logging
-from waxwerk.analysis.bpm_detector import BPMDetector
+from djsbf.analysis.bpm_detector import BPMDetector
 
 logger = logging.getLogger(__name__)
 

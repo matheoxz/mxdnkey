@@ -1,5 +1,5 @@
 import logging
-import waxwerk.config as config
+import djsbf.config as config
 
 def get_logger(name):
     """
